@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Camera, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 import Header from '@/components/Header';
 import UploadZone from '@/components/UploadZone';
 import ResultPanel from '@/components/ResultPanel';
@@ -38,20 +39,38 @@ const Index = () => {
     setIsLoading(true);
     setError(null);
 
-    // Note: This is a placeholder. To enable AI functionality, 
-    // connect to Cloud and set up the Lovable AI integration.
     try {
-      // Simulate processing for demo
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      toast({
-        title: "Backend Required",
-        description: "Connect to Cloud to enable AI text digitization.",
+      const { data, error: functionError } = await supabase.functions.invoke('digitize-text', {
+        body: { imageBase64: base64Image }
       });
-      
-      setError("To digitize text, please connect this app to Cloud for AI capabilities. Click 'Enable Cloud' below to get started.");
+
+      if (functionError) {
+        console.error('Function error:', functionError);
+        throw new Error(functionError.message || 'Failed to process image');
+      }
+
+      if (data?.error) {
+        throw new Error(data.error);
+      }
+
+      if (data?.text) {
+        setDigitizedText(data.text);
+        toast({
+          title: "Success!",
+          description: "Text has been digitized successfully.",
+        });
+      } else {
+        throw new Error('No text was extracted from the image');
+      }
     } catch (err) {
-      setError("Failed to process image. Please try again.");
+      console.error('Digitization error:', err);
+      const errorMessage = err instanceof Error ? err.message : 'Failed to process image. Please try again.';
+      setError(errorMessage);
+      toast({
+        title: "Error",
+        description: errorMessage,
+        variant: "destructive",
+      });
     } finally {
       setIsLoading(false);
     }
