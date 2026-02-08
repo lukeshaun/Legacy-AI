@@ -12,14 +12,7 @@ serve(async (req) => {
   }
 
   try {
-    const { imageBase64 } = await req.json();
-
-    if (!imageBase64) {
-      return new Response(
-        JSON.stringify({ error: "No image provided" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
+    const { imageBase64, prompt } = await req.json();
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) {
@@ -27,6 +20,58 @@ serve(async (req) => {
       return new Response(
         JSON.stringify({ error: "AI service not configured" }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Text-only mode (for biography generation)
+    if (prompt && !imageBase64) {
+      console.log("Processing text prompt for biography generation...");
+
+      const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${LOVABLE_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "google/gemini-2.5-flash",
+          messages: [
+            {
+              role: "system",
+              content: "You are a skilled biographer and narrative writer. Create compelling, reflective stories from personal memories and journal entries."
+            },
+            {
+              role: "user",
+              content: prompt
+            }
+          ],
+          max_tokens: 8192,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("AI gateway error:", response.status, errorText);
+        return new Response(
+          JSON.stringify({ error: "Failed to generate biography" }),
+          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      const data = await response.json();
+      const generatedText = data.choices?.[0]?.message?.content || "";
+
+      return new Response(
+        JSON.stringify({ text: generatedText }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Image transcription mode
+    if (!imageBase64) {
+      return new Response(
+        JSON.stringify({ error: "No image provided" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 

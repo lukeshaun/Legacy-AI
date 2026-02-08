@@ -1,137 +1,98 @@
 import React, { useState } from 'react';
-import { Camera, Loader2 } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
-import Header from '@/components/Header';
-import UploadZone from '@/components/UploadZone';
-import ResultPanel from '@/components/ResultPanel';
+import { Check } from 'lucide-react';
+import Sidebar from '@/components/Sidebar';
+import UploadTab from '@/components/tabs/UploadTab';
+import BooksTab from '@/components/tabs/BooksTab';
+import TimelineTab from '@/components/tabs/TimelineTab';
+import BiographyTab from '@/components/tabs/BiographyTab';
+import SaveModal from '@/components/SaveModal';
+import { Entry } from '@/types/entry';
 
 const Index = () => {
-  const [image, setImage] = useState<string | null>(null);
-  const [base64Image, setBase64Image] = useState<string | null>(null);
-  const [digitizedText, setDigitizedText] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const { toast } = useToast();
+  const [activeTab, setActiveTab] = useState('upload');
+  const [copied, setCopied] = useState(false);
+  
+  // Save modal state
+  const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
+  const [pendingEntry, setPendingEntry] = useState<{ text: string; galleryCount: number; hasAudio: boolean } | null>(null);
 
-  const handleFileSelect = (file: File) => {
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setImage(URL.createObjectURL(file));
-      const base64Data = (reader.result as string).split(',')[1];
-      setBase64Image(base64Data);
-      setDigitizedText('');
-      setError(null);
+  // Books and Entries
+  const [folders] = useState(['Personal Journal', 'Travel 2024', 'Childhood Memories']);
+  const [savedEntries, setSavedEntries] = useState<Entry[]>([
+    { id: 1, text: "Visited the Eiffel Tower today. The lights were beautiful.", folder: "Travel 2024", location: "Paris, France", timestamp: "2024-01-10", attachments: { photos: 1, audio: false } },
+    { id: 2, text: "Started learning to play the piano. It's harder than it looks.", folder: "Personal Journal", location: "New York, USA", timestamp: "2024-02-15", attachments: { photos: 0, audio: true } }
+  ]);
+
+  const handleSaveEntry = (data: { text: string; galleryCount: number; hasAudio: boolean }) => {
+    setPendingEntry(data);
+    setIsSaveModalOpen(true);
+  };
+
+  const handleConfirmSave = (folder: string, location: string, date: string) => {
+    if (!pendingEntry) return;
+    
+    const newEntry: Entry = {
+      id: Date.now(),
+      text: pendingEntry.text,
+      folder,
+      location,
+      timestamp: date,
+      attachments: {
+        photos: pendingEntry.galleryCount,
+        audio: pendingEntry.hasAudio
+      }
     };
-    reader.readAsDataURL(file);
-  };
-
-  const handleReset = () => {
-    setImage(null);
-    setBase64Image(null);
-    setDigitizedText('');
-    setError(null);
-  };
-
-  const digitizeText = async () => {
-    if (!base64Image) return;
-
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      const { data, error: functionError } = await supabase.functions.invoke('digitize-text', {
-        body: { imageBase64: base64Image }
-      });
-
-      if (functionError) {
-        console.error('Function error:', functionError);
-        throw new Error(functionError.message || 'Failed to process image');
-      }
-
-      if (data?.error) {
-        throw new Error(data.error);
-      }
-
-      if (data?.text) {
-        setDigitizedText(data.text);
-        toast({
-          title: "Success!",
-          description: "Text has been digitized successfully.",
-        });
-      } else {
-        throw new Error('No text was extracted from the image');
-      }
-    } catch (err) {
-      console.error('Digitization error:', err);
-      const errorMessage = err instanceof Error ? err.message : 'Failed to process image. Please try again.';
-      setError(errorMessage);
-      toast({
-        title: "Error",
-        description: errorMessage,
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
+    
+    setSavedEntries([newEntry, ...savedEntries]);
+    setIsSaveModalOpen(false);
+    setPendingEntry(null);
+    setActiveTab('books');
   };
 
   return (
-    <div className="min-h-screen gradient-warm">
-      <div className="min-h-screen p-4 md:p-8 lg:p-12">
-        <div className="max-w-5xl mx-auto">
-          <Header />
+    <div className="min-h-screen bg-background text-foreground font-body flex flex-col md:flex-row">
+      <Sidebar 
+        activeTab={activeTab} 
+        setActiveTab={setActiveTab}
+        onClearBookView={() => {}}
+      />
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* Left Column: Upload */}
-            <section className="space-y-5">
-              <UploadZone
-                image={image}
-                onFileSelect={handleFileSelect}
-                onReset={handleReset}
-              />
+      <main className="flex-1 p-6 md:p-10 overflow-y-auto">
+        {activeTab === 'upload' && (
+          <UploadTab onSaveEntry={handleSaveEntry} />
+        )}
 
-              <button
-                disabled={!image || isLoading}
-                onClick={digitizeText}
-                className="btn-primary shadow-soft hover:shadow-lifted"
-              >
-                {isLoading ? (
-                  <>
-                    <Loader2 className="animate-spin" size={20} />
-                    Processing...
-                  </>
-                ) : (
-                  <>
-                    <Camera size={20} />
-                    Digitize Text
-                  </>
-                )}
-              </button>
-            </section>
+        {activeTab === 'books' && (
+          <BooksTab 
+            folders={folders} 
+            entries={savedEntries}
+            onNavigateToUpload={() => setActiveTab('upload')}
+          />
+        )}
 
-            {/* Right Column: Result */}
-            <section className="flex flex-col">
-              <ResultPanel
-                text={digitizedText}
-                isLoading={isLoading}
-                error={error}
-              />
-              
-              <p className="mt-4 text-xs text-muted-foreground text-center px-4">
-                Tip: For best results, ensure good lighting and keep the document flat.
-              </p>
-            </section>
-          </div>
+        {activeTab === 'timeline' && (
+          <TimelineTab entries={savedEntries} />
+        )}
 
-          {/* Footer */}
-          <footer className="mt-16 text-center">
-            <p className="text-xs text-muted-foreground">
-              Preserving memories, one document at a time.
-            </p>
-          </footer>
+        {activeTab === 'biography' && (
+          <BiographyTab folders={folders} entries={savedEntries} />
+        )}
+      </main>
+
+      <SaveModal
+        isOpen={isSaveModalOpen}
+        onClose={() => setIsSaveModalOpen(false)}
+        onSave={handleConfirmSave}
+        folders={folders}
+        initialText={pendingEntry?.text}
+      />
+
+      {copied && (
+        <div className="fixed bottom-8 right-8 bg-foreground text-background px-6 py-3 rounded-2xl shadow-2xl flex items-center gap-2 animate-in slide-in-from-bottom-2 duration-300">
+          <Check className="text-success" size={18} />
+          <span className="text-sm font-bold tracking-tight">Copied to clipboard!</span>
         </div>
-      </div>
+      )}
     </div>
   );
 };
