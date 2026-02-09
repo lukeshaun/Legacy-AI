@@ -5,6 +5,7 @@ import UploadTab from '@/components/tabs/UploadTab';
 import BooksTab from '@/components/tabs/BooksTab';
 import TimelineTab from '@/components/tabs/TimelineTab';
 import BiographyTab from '@/components/tabs/BiographyTab';
+import SearchTab from '@/components/tabs/SearchTab';
 import SaveModal from '@/components/SaveModal';
 import { Entry } from '@/types/entry';
 
@@ -68,6 +69,10 @@ const Index = () => {
             entries={savedEntries}
             onNavigateToUpload={() => setActiveTab('upload')}
           />
+        )}
+
+        {activeTab === 'search' && (
+          <SearchTab entries={savedEntries} folders={folders} />
         )}
 
         {activeTab === 'timeline' && (
