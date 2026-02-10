@@ -29,7 +29,7 @@ const Index = () => {
     setIsSaveModalOpen(true);
   };
 
-  const handleConfirmSave = (folder: string, location: string, date: string) => {
+  const handleConfirmSave = (folder: string, location: string, dateStart: string, dateEnd: string) => {
     if (!pendingEntry) return;
     
     const newEntry: Entry = {
@@ -37,7 +37,8 @@ const Index = () => {
       text: pendingEntry.text,
       folder,
       location,
-      timestamp: date,
+      timestamp: dateStart,
+      timestampEnd: dateEnd || undefined,
       attachments: {
         photos: pendingEntry.galleryCount,
         audio: pendingEntry.hasAudio

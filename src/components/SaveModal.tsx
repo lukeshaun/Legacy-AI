@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { X, Loader2, Calendar, MapPin, Book } from 'lucide-react';
+import { X, Loader2, Calendar, MapPin, Book, CalendarRange } from 'lucide-react';
 
 interface SaveModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (folder: string, location: string, date: string) => void;
+  onSave: (folder: string, location: string, dateStart: string, dateEnd: string) => void;
   folders: string[];
   initialText?: string;
 }
@@ -12,21 +12,25 @@ interface SaveModalProps {
 const SaveModal: React.FC<SaveModalProps> = ({ isOpen, onClose, onSave, folders, initialText }) => {
   const [selectedFolder, setSelectedFolder] = useState(folders[0] || 'Personal Journal');
   const [locationInput, setLocationInput] = useState('');
-  const [dateInput, setDateInput] = useState(new Date().toISOString().split('T')[0]);
+  const [dateStart, setDateStart] = useState(new Date().toISOString().split('T')[0]);
+  const [dateEnd, setDateEnd] = useState('');
+  const [useRange, setUseRange] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
-      setDateInput(new Date().toISOString().split('T')[0]);
+      const today = new Date().toISOString().split('T')[0];
+      setDateStart(today);
+      setDateEnd('');
+      setUseRange(false);
       setLocationInput('');
-      // Could add AI metadata extraction here
     }
   }, [isOpen]);
 
   if (!isOpen) return null;
 
   const handleSave = () => {
-    onSave(selectedFolder, locationInput || "Unknown Location", dateInput);
+    onSave(selectedFolder, locationInput || "Unknown Location", dateStart, useRange ? dateEnd : '');
   };
 
   return (
@@ -42,21 +46,60 @@ const SaveModal: React.FC<SaveModalProps> = ({ isOpen, onClose, onSave, folders,
               {isVerifying ? (
                 <span className="flex items-center gap-2"><Loader2 className="animate-spin w-3 h-3"/> Legacy AI is identifying details...</span>
               ) : (
-                "Please verify or add the date and location for this memory."
+                "Please verify or add the date range and location for this memory."
               )}
             </p>
           </div>
+
+          {/* Date Section */}
           <div>
-            <label className="text-xs font-bold text-muted-foreground uppercase mb-3 block tracking-widest flex items-center gap-2">
-              <Calendar size={14} className="text-primary"/> Entry Date
-            </label>
-            <input 
-              type="date"
-              value={dateInput}
-              onChange={(e) => setDateInput(e.target.value)}
-              className="w-full px-5 py-4 bg-muted border-none rounded-2xl text-sm font-medium"
-            />
+            <div className="flex items-center justify-between mb-3">
+              <label className="text-xs font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-2">
+                <Calendar size={14} className="text-primary"/> {useRange ? 'Date Range' : 'Entry Date'}
+              </label>
+              <button
+                type="button"
+                onClick={() => setUseRange(!useRange)}
+                className={`flex items-center gap-1.5 text-[10px] font-bold px-3 py-1.5 rounded-lg transition-all ${
+                  useRange 
+                    ? 'bg-primary/10 text-primary' 
+                    : 'bg-muted text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                <CalendarRange size={12} />
+                {useRange ? 'Using range' : 'Add time range'}
+              </button>
+            </div>
+            <div className={`grid gap-3 ${useRange ? 'grid-cols-2' : 'grid-cols-1'}`}>
+              <div>
+                {useRange && <span className="text-[10px] font-bold text-muted-foreground uppercase mb-1 block">From</span>}
+                <input 
+                  type="date"
+                  value={dateStart}
+                  onChange={(e) => setDateStart(e.target.value)}
+                  className="w-full px-5 py-4 bg-muted border-none rounded-2xl text-sm font-medium"
+                />
+              </div>
+              {useRange && (
+                <div className="animate-in fade-in slide-in-from-left-2 duration-200">
+                  <span className="text-[10px] font-bold text-muted-foreground uppercase mb-1 block">To</span>
+                  <input 
+                    type="date"
+                    value={dateEnd}
+                    min={dateStart}
+                    onChange={(e) => setDateEnd(e.target.value)}
+                    className="w-full px-5 py-4 bg-muted border-none rounded-2xl text-sm font-medium"
+                  />
+                </div>
+              )}
+            </div>
+            {useRange && (
+              <p className="text-[10px] text-muted-foreground mt-2 italic">
+                Specify the period you were at this location.
+              </p>
+            )}
           </div>
+
           <div>
             <label className="text-xs font-bold text-muted-foreground uppercase mb-3 block tracking-widest flex items-center gap-2">
               <MapPin size={14} className="text-primary"/> Location
@@ -65,7 +108,7 @@ const SaveModal: React.FC<SaveModalProps> = ({ isOpen, onClose, onSave, folders,
               type="text"
               value={locationInput}
               onChange={(e) => setLocationInput(e.target.value)}
-              placeholder="Where did this happen?"
+              placeholder="Where were you during this time?"
               className="w-full px-5 py-4 bg-muted border-none rounded-2xl text-sm"
             />
           </div>
