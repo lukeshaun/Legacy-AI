@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { Book, Plus, ArrowLeft, Calendar, MapPin, ImageIcon, Mic } from 'lucide-react';
+import { Book, Plus, ArrowLeft, Calendar, MapPin, Share2, Check, Link } from 'lucide-react';
 import { Entry } from '@/types/entry';
+import { toast } from 'sonner';
 
 interface BooksTabProps {
   folders: string[];
@@ -42,9 +43,22 @@ const BooksTab: React.FC<BooksTabProps> = ({ folders, entries, onNavigateToUploa
                       <p className="text-xs text-muted-foreground flex items-center gap-1"><MapPin size={10} /> {entry.location}</p>
                     </div>
                   </div>
-                  <div className="flex gap-2">
-                    {entry.attachments.photos > 0 && <span className="bg-primary/10 text-primary px-3 py-1 rounded-full text-[10px] font-bold">{entry.attachments.photos} Photos</span>}
-                    {entry.attachments.audio && <span className="bg-success/10 text-success px-3 py-1 rounded-full text-[10px] font-bold">Voice Note</span>}
+                  <div className="flex items-center gap-2">
+                    <div className="flex gap-2">
+                      {entry.attachments.photos > 0 && <span className="bg-primary/10 text-primary px-3 py-1 rounded-full text-[10px] font-bold">{entry.attachments.photos} Photos</span>}
+                      {entry.attachments.audio && <span className="bg-success/10 text-success px-3 py-1 rounded-full text-[10px] font-bold">Voice Note</span>}
+                    </div>
+                    <button
+                      onClick={() => {
+                        const url = `${window.location.origin}/?entry=${entry.id}`;
+                        navigator.clipboard.writeText(url);
+                        toast.success('Link copied to clipboard!');
+                      }}
+                      className="p-2 rounded-xl hover:bg-muted transition-colors text-muted-foreground hover:text-primary"
+                      title="Share entry"
+                    >
+                      <Share2 size={16} />
+                    </button>
                   </div>
                 </div>
                 <p className="text-foreground/80 leading-relaxed font-display text-lg">{entry.text}</p>
