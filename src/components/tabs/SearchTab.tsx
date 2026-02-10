@@ -93,6 +93,9 @@ const SearchTab: React.FC<SearchTabProps> = ({ entries, folders }) => {
                     <div>
                       <p className="text-sm font-bold text-foreground">
                         {new Date(entry.timestamp).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+                        {entry.timestampEnd && (
+                          <span className="text-muted-foreground font-medium"> — {new Date(entry.timestampEnd).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</span>
+                        )}
                       </p>
                       <p className="text-xs text-muted-foreground flex items-center gap-1">
                         <MapPin size={10} /> {entry.location}

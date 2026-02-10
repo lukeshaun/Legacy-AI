@@ -4,6 +4,7 @@ export interface Entry {
   folder: string;
   location: string;
   timestamp: string;
+  timestampEnd?: string;
   attachments: {
     photos: number;
     audio: boolean;

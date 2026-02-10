@@ -173,7 +173,10 @@ const TimelineTab: React.FC<TimelineTabProps> = ({ entries }) => {
                 <p className="text-sm text-foreground/80 mb-3">{entry.text}</p>
                 <div className="flex justify-between items-center text-[10px] text-muted-foreground font-bold uppercase tracking-wider">
                   <span>{entry.folder}</span>
-                  <span className="flex items-center gap-1"><Calendar size={10} /> {entry.timestamp}</span>
+                  <span className="flex items-center gap-1">
+                    <Calendar size={10} /> {entry.timestamp}
+                    {entry.timestampEnd && ` — ${entry.timestampEnd}`}
+                  </span>
                 </div>
               </div>
             </div>
