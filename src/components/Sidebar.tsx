@@ -8,9 +8,9 @@ interface SidebarProps {
 }
 
 const navItems = [
+  { id: 'search', icon: Search, label: 'Smart Search' },
   { id: 'upload', icon: Plus, label: 'Upload Entry' },
   { id: 'books', icon: History, label: 'View Books' },
-  { id: 'search', icon: Search, label: 'Smart Search' },
   { id: 'timeline', icon: MapPin, label: 'Location Timeline' },
   { id: 'biography', icon: Sparkles, label: 'Create Biography' },
 ];
