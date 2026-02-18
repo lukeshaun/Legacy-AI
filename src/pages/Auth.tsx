@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
+import logo from '@/assets/logo.png';
 
 const Auth = () => {
   const { session, loading: authLoading } = useAuth();
@@ -60,6 +61,9 @@ const Auth = () => {
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
+          <div className="flex justify-center mb-4">
+            <img src={logo} alt="Legacy AI" className="w-20 h-20 object-contain" />
+          </div>
           <CardTitle className="text-3xl font-display">
             {isSignUp ? 'Create Account' : 'Welcome Back'}
           </CardTitle>
