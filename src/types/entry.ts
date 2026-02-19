@@ -1,5 +1,5 @@
 export interface Entry {
-  id: number;
+  id: string;
   text: string;
   folder: string;
   location: string;
