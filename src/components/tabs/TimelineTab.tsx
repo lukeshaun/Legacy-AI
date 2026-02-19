@@ -54,8 +54,8 @@ interface TimelineTabProps {
 }
 
 const TimelineTab: React.FC<TimelineTabProps> = ({ entries }) => {
-  const [hoveredId, setHoveredId] = useState<number | null>(null);
-  const [selectedId, setSelectedId] = useState<number | null>(null);
+  const [hoveredId, setHoveredId] = useState<string | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
 
   const markers = useMemo(() => {
     return entries

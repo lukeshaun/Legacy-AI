@@ -14,6 +14,48 @@ export type Database = {
   }
   public: {
     Tables: {
+      entries: {
+        Row: {
+          created_at: string | null
+          folder: string
+          has_audio: boolean | null
+          id: string
+          location: string | null
+          photo_count: number | null
+          text: string
+          timestamp: string
+          timestamp_end: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          folder: string
+          has_audio?: boolean | null
+          id?: string
+          location?: string | null
+          photo_count?: number | null
+          text: string
+          timestamp?: string
+          timestamp_end?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          folder?: string
+          has_audio?: boolean | null
+          id?: string
+          location?: string | null
+          photo_count?: number | null
+          text?: string
+          timestamp?: string
+          timestamp_end?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
