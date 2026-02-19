@@ -6,7 +6,8 @@ import {
   Geography,
   Marker,
   ZoomableGroup,
-} from 'react-simple-maps';
+  createCoordinates,
+} from '@vnedyalk0v/react19-simple-maps';
 import { Entry } from '@/types/entry';
 
 const GEO_URL = 'https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json';
@@ -82,7 +83,7 @@ const TimelineTab: React.FC<TimelineTabProps> = ({ entries }) => {
         <div className="relative" style={{ aspectRatio: '2 / 1' }}>
           <ComposableMap
             projection="geoMercator"
-            projectionConfig={{ scale: 130, center: [10, 30] }}
+            projectionConfig={{ scale: 130, center: createCoordinates(10, 30) }}
             style={{ width: '100%', height: '100%' }}
           >
             <ZoomableGroup>
@@ -107,11 +108,10 @@ const TimelineTab: React.FC<TimelineTabProps> = ({ entries }) => {
               {markers.map((marker) => (
                 <Marker
                   key={marker.id}
-                  coordinates={marker.coords}
+                  coordinates={createCoordinates(marker.coords[0], marker.coords[1])}
                   onMouseEnter={() => setHoveredId(marker.id)}
                   onMouseLeave={() => setHoveredId(null)}
                   onClick={() => setSelectedId(selectedId === marker.id ? null : marker.id)}
-                  style={{ cursor: 'pointer' }}
                 >
                   <circle
                     r={selectedId === marker.id ? 7 : hoveredId === marker.id ? 6 : 4}
