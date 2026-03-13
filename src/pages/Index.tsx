@@ -20,7 +20,7 @@ const Index = () => {
   // Database-backed entries
   const { entries: savedEntries, folders, loading, addEntry } = useEntries();
 
-  const handleSaveEntry = (data: { text: string; galleryCount: number; hasAudio: boolean }) => {
+  const handleSaveEntry = (data: { text: string; galleryCount: number; hasAudio: boolean; mediaPaths: string[] }) => {
     setPendingEntry(data);
     setIsSaveModalOpen(true);
   };
