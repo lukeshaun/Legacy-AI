@@ -1,21 +1,29 @@
 import React, { useRef, useState } from 'react';
 import { Camera, FileText, Loader2, Trash2, X, Plus, Mic, Square, Upload, Headphones, ImageIcon, Save, Sparkles } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
+import { uploadMedia, getSignedUrl, deleteMedia } from '@/hooks/useMediaUpload';
+
+interface UploadedFile {
+  localUrl: string;
+  storagePath: string;
+}
 
 interface UploadTabProps {
-  onSaveEntry: (data: { text: string; galleryCount: number; hasAudio: boolean }) => void;
+  onSaveEntry: (data: { text: string; galleryCount: number; hasAudio: boolean; mediaPaths: string[] }) => void;
 }
 
 const UploadTab: React.FC<UploadTabProps> = ({ onSaveEntry }) => {
-  const [mainImage, setMainImage] = useState<string | null>(null);
+  const { user } = useAuth();
+  const [mainImage, setMainImage] = useState<UploadedFile | null>(null);
   const [mainImageBase64, setMainImageBase64] = useState<string | null>(null);
   const [digitizedText, setDigitizedText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [galleryImages, setGalleryImages] = useState<string[]>([]);
+  const [galleryImages, setGalleryImages] = useState<UploadedFile[]>([]);
   const [isRecording, setIsRecording] = useState(false);
-  const [audioURL, setAudioURL] = useState<string | null>(null);
-  const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
+  const [audioFile, setAudioFile] = useState<UploadedFile | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const galleryInputRef = useRef<HTMLInputElement>(null);
@@ -23,35 +31,68 @@ const UploadTab: React.FC<UploadTabProps> = ({ onSaveEntry }) => {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
 
-  const handleMainFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleMainFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setMainImage(URL.createObjectURL(file));
-        setMainImageBase64((reader.result as string).split(',')[1]);
-        setError(null);
-      };
-      reader.readAsDataURL(file);
+    if (!file || !user) return;
+
+    setIsUploading(true);
+    setError(null);
+    try {
+      // Read base64 for transcription
+      const base64 = await readFileAsBase64(file);
+      setMainImageBase64(base64);
+
+      // Upload to storage
+      const storagePath = await uploadMedia(file, user.id, 'documents');
+      const signedUrl = await getSignedUrl(storagePath);
+      setMainImage({ localUrl: signedUrl, storagePath });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to upload image');
+    } finally {
+      setIsUploading(false);
     }
   };
 
-  const handleGalleryUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleGalleryUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
-    const newImages = files.map(file => URL.createObjectURL(file));
-    setGalleryImages(prev => [...prev, ...newImages]);
+    if (!files.length || !user) return;
+
+    setIsUploading(true);
+    setError(null);
+    try {
+      const uploaded: UploadedFile[] = [];
+      for (const file of files) {
+        const storagePath = await uploadMedia(file, user.id, 'gallery');
+        const signedUrl = await getSignedUrl(storagePath);
+        uploaded.push({ localUrl: signedUrl, storagePath });
+      }
+      setGalleryImages(prev => [...prev, ...uploaded]);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to upload gallery images');
+    } finally {
+      setIsUploading(false);
+    }
   };
 
-  const handleAudioUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleAudioUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      if (file.size > 25 * 1024 * 1024) {
-        setError("Audio file is too large (max 25MB)");
-        return;
-      }
-      setAudioBlob(file);
-      setAudioURL(URL.createObjectURL(file));
-      setError(null);
+    if (!file || !user) return;
+
+    if (file.size > 25 * 1024 * 1024) {
+      setError("Audio file is too large (max 25MB)");
+      return;
+    }
+
+    setIsUploading(true);
+    setError(null);
+    try {
+      const storagePath = await uploadMedia(file, user.id, 'audio');
+      const signedUrl = await getSignedUrl(storagePath);
+      setAudioFile({ localUrl: signedUrl, storagePath });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to upload audio');
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -61,10 +102,19 @@ const UploadTab: React.FC<UploadTabProps> = ({ onSaveEntry }) => {
       mediaRecorderRef.current = new MediaRecorder(stream);
       audioChunksRef.current = [];
       mediaRecorderRef.current.ondataavailable = (event) => audioChunksRef.current.push(event.data);
-      mediaRecorderRef.current.onstop = () => {
+      mediaRecorderRef.current.onstop = async () => {
+        if (!user) return;
         const blob = new Blob(audioChunksRef.current, { type: 'audio/wav' });
-        setAudioBlob(blob);
-        setAudioURL(URL.createObjectURL(blob));
+        setIsUploading(true);
+        try {
+          const storagePath = await uploadMedia(blob, user.id, 'audio');
+          const signedUrl = await getSignedUrl(storagePath);
+          setAudioFile({ localUrl: signedUrl, storagePath });
+        } catch (err) {
+          setError(err instanceof Error ? err.message : 'Failed to save recording');
+        } finally {
+          setIsUploading(false);
+        }
       };
       mediaRecorderRef.current.start();
       setIsRecording(true);
@@ -105,25 +155,65 @@ const UploadTab: React.FC<UploadTabProps> = ({ onSaveEntry }) => {
     }
   };
 
-  const resetUploadState = () => {
+  const removeMainImage = async () => {
+    if (mainImage) {
+      try { await deleteMedia(mainImage.storagePath); } catch {}
+    }
+    setMainImage(null);
+    setMainImageBase64(null);
+  };
+
+  const removeGalleryImage = async (index: number) => {
+    const img = galleryImages[index];
+    if (img) {
+      try { await deleteMedia(img.storagePath); } catch {}
+    }
+    setGalleryImages(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const removeAudio = async () => {
+    if (audioFile) {
+      try { await deleteMedia(audioFile.storagePath); } catch {}
+    }
+    setAudioFile(null);
+  };
+
+  const resetUploadState = async () => {
+    // Clean up all uploaded files from storage
+    const pathsToDelete: string[] = [];
+    if (mainImage) pathsToDelete.push(mainImage.storagePath);
+    galleryImages.forEach(img => pathsToDelete.push(img.storagePath));
+    if (audioFile) pathsToDelete.push(audioFile.storagePath);
+
+    if (pathsToDelete.length > 0) {
+      try {
+        await supabase.storage.from('user-media').remove(pathsToDelete);
+      } catch {}
+    }
+
     setMainImage(null);
     setMainImageBase64(null);
     setDigitizedText('');
     setGalleryImages([]);
-    setAudioURL(null);
-    setAudioBlob(null);
+    setAudioFile(null);
     setError(null);
   };
 
   const handleArchive = () => {
+    const mediaPaths: string[] = [];
+    if (mainImage) mediaPaths.push(mainImage.storagePath);
+    galleryImages.forEach(img => mediaPaths.push(img.storagePath));
+    if (audioFile) mediaPaths.push(audioFile.storagePath);
+
     onSaveEntry({
       text: digitizedText,
       galleryCount: galleryImages.length,
-      hasAudio: !!audioURL
+      hasAudio: !!audioFile,
+      mediaPaths,
     });
   };
 
-  const hasContent = mainImage || digitizedText || galleryImages.length > 0 || audioURL;
+  const hasContent = mainImage || digitizedText || galleryImages.length > 0 || audioFile;
 
   return (
     <div className="max-w-5xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -142,6 +232,12 @@ const UploadTab: React.FC<UploadTabProps> = ({ onSaveEntry }) => {
         </div>
       )}
 
+      {isUploading && (
+        <div className="mb-6 p-4 bg-primary/10 border border-primary/20 rounded-2xl text-primary text-sm font-medium flex items-center gap-2 animate-in fade-in duration-300">
+          <Loader2 size={16} className="animate-spin" /> Uploading to secure storage...
+        </div>
+      )}
+
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         {/* Left Column - Main Image Upload */}
         <div className="lg:col-span-4 space-y-6">
@@ -152,9 +248,9 @@ const UploadTab: React.FC<UploadTabProps> = ({ onSaveEntry }) => {
           >
             {mainImage ? (
               <div className="group relative w-full h-full">
-                <img src={mainImage} className="w-full h-full object-contain p-4" alt="Main" />
+                <img src={mainImage.localUrl} className="w-full h-full object-contain p-4" alt="Main" />
                 <div className="absolute inset-0 bg-foreground/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                  <button onClick={(e) => { e.stopPropagation(); setMainImage(null); setMainImageBase64(null); }} className="bg-card p-3 rounded-full text-destructive shadow-xl">
+                  <button onClick={(e) => { e.stopPropagation(); removeMainImage(); }} className="bg-card p-3 rounded-full text-destructive shadow-xl">
                     <Trash2 size={24} />
                   </button>
                 </div>
@@ -188,7 +284,7 @@ const UploadTab: React.FC<UploadTabProps> = ({ onSaveEntry }) => {
               <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
                 <FileText size={12} /> Entry Narrative
               </span>
-              {(digitizedText || audioURL) && (
+              {(digitizedText || audioFile) && (
                 <button onClick={handleArchive} className="text-xs font-bold text-primary flex items-center gap-1 bg-primary/10 px-3 py-1.5 rounded-lg hover:bg-primary/20 transition-colors">
                   <Save size={14} /> Finish & Archive
                 </button>
@@ -218,9 +314,9 @@ const UploadTab: React.FC<UploadTabProps> = ({ onSaveEntry }) => {
               <div className="grid grid-cols-3 gap-2 h-24 overflow-y-auto">
                 {galleryImages.map((img, i) => (
                   <div key={i} className="relative aspect-square rounded-xl overflow-hidden group">
-                    <img src={img} className="w-full h-full object-cover" alt={`Gallery ${i}`} />
+                    <img src={img.localUrl} className="w-full h-full object-cover" alt={`Gallery ${i}`} />
                     <button 
-                      onClick={() => setGalleryImages(galleryImages.filter((_, idx) => idx !== i))}
+                      onClick={() => removeGalleryImage(i)}
                       className="absolute inset-0 bg-destructive/80 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all"
                     >
                       <X className="text-destructive-foreground" size={14} />
@@ -242,7 +338,7 @@ const UploadTab: React.FC<UploadTabProps> = ({ onSaveEntry }) => {
                   <Mic size={16} className="text-primary" />
                   Voice Note
                 </h3>
-                {!audioURL && !isRecording && (
+                {!audioFile && !isRecording && (
                   <button 
                     onClick={() => audioInputRef.current?.click()} 
                     className="p-1.5 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-lg transition-all"
@@ -254,7 +350,7 @@ const UploadTab: React.FC<UploadTabProps> = ({ onSaveEntry }) => {
                 <input type="file" ref={audioInputRef} onChange={handleAudioUpload} accept="audio/*" className="hidden" />
               </div>
               <div className="flex flex-col gap-3">
-                {!audioURL ? (
+                {!audioFile ? (
                   <button
                     onClick={isRecording ? stopRecording : startRecording}
                     className={`w-full py-3 rounded-2xl flex items-center justify-center gap-2 font-bold text-xs transition-all border ${
@@ -268,8 +364,8 @@ const UploadTab: React.FC<UploadTabProps> = ({ onSaveEntry }) => {
                 ) : (
                   <div className="flex flex-col gap-2">
                     <div className="flex items-center gap-2 bg-primary/5 p-2 rounded-xl border border-primary/10">
-                      <audio src={audioURL} controls className="h-8 flex-1" />
-                      <button onClick={() => { setAudioURL(null); setAudioBlob(null); }} className="p-2 text-muted-foreground hover:text-destructive">
+                      <audio src={audioFile.localUrl} controls className="h-8 flex-1" />
+                      <button onClick={removeAudio} className="p-2 text-muted-foreground hover:text-destructive">
                         <Trash2 size={16} />
                       </button>
                     </div>
@@ -278,7 +374,7 @@ const UploadTab: React.FC<UploadTabProps> = ({ onSaveEntry }) => {
                     </p>
                   </div>
                 )}
-                {!audioURL && !isRecording && (
+                {!audioFile && !isRecording && (
                   <p className="text-[9px] text-center text-muted-foreground uppercase font-black tracking-tighter mt-1">
                     Record or upload audio memory
                   </p>
@@ -291,5 +387,14 @@ const UploadTab: React.FC<UploadTabProps> = ({ onSaveEntry }) => {
     </div>
   );
 };
+
+function readFileAsBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => resolve((reader.result as string).split(',')[1]);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
 
 export default UploadTab;

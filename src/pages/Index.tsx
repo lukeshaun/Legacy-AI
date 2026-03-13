@@ -15,12 +15,12 @@ const Index = () => {
   
   // Save modal state
   const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
-  const [pendingEntry, setPendingEntry] = useState<{ text: string; galleryCount: number; hasAudio: boolean } | null>(null);
+  const [pendingEntry, setPendingEntry] = useState<{ text: string; galleryCount: number; hasAudio: boolean; mediaPaths: string[] } | null>(null);
 
   // Database-backed entries
   const { entries: savedEntries, folders, loading, addEntry } = useEntries();
 
-  const handleSaveEntry = (data: { text: string; galleryCount: number; hasAudio: boolean }) => {
+  const handleSaveEntry = (data: { text: string; galleryCount: number; hasAudio: boolean; mediaPaths: string[] }) => {
     setPendingEntry(data);
     setIsSaveModalOpen(true);
   };
