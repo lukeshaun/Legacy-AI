@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, History, MapPin, Sparkles, UserCircle, Search, Sun, Moon, Flame } from 'lucide-react';
+import { Plus, History, MapPin, Sparkles, UserCircle, Search, Sun, Moon, Flame, User } from 'lucide-react';
 import logo from '@/assets/logo.png';
 
 type Theme = 'light' | 'warm' | 'dark';
