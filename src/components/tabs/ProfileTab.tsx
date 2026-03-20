@@ -1,8 +1,11 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import { Entry } from '@/types/entry';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { BookOpen, Mic, Image, Calendar, Award, TrendingUp, BarChart3 } from 'lucide-react';
+import { BookOpen, Mic, Image, Calendar, Award, TrendingUp, BarChart3, Camera } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
+import { toast } from 'sonner';
 
 interface ProfileTabProps {
   entries: Entry[];
@@ -34,6 +37,61 @@ function getLevel(count: number) {
 const MONTH_LABELS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
 const ProfileTab: React.FC<ProfileTabProps> = ({ entries, folders }) => {
+  const { user } = useAuth();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
+
+  // Load avatar on mount
+  React.useEffect(() => {
+    if (!user) return;
+    supabase
+      .from('profiles')
+      .select('avatar_url')
+      .eq('id', user.id)
+      .single()
+      .then(({ data }) => {
+        if (data?.avatar_url) {
+          supabase.storage
+            .from('user-media')
+            .createSignedUrl(data.avatar_url, 3600)
+            .then(({ data: urlData }) => {
+              if (urlData) setAvatarUrl(urlData.signedUrl);
+            });
+        }
+      });
+  }, [user]);
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+    setUploading(true);
+    try {
+      const ext = file.name.split('.').pop();
+      const path = `${user.id}/avatar/profile.${ext}`;
+      const { error: uploadErr } = await supabase.storage
+        .from('user-media')
+        .upload(path, file, { upsert: true });
+      if (uploadErr) throw uploadErr;
+
+      const { error: updateErr } = await supabase
+        .from('profiles')
+        .update({ avatar_url: path })
+        .eq('id', user.id);
+      if (updateErr) throw updateErr;
+
+      const { data: urlData } = await supabase.storage
+        .from('user-media')
+        .createSignedUrl(path, 3600);
+      if (urlData) setAvatarUrl(urlData.signedUrl);
+      toast.success('Profile photo updated!');
+    } catch (err) {
+      console.error(err);
+      toast.error('Failed to upload photo');
+    } finally {
+      setUploading(false);
+    }
+  };
   const stats = useMemo(() => {
     const totalMemories = entries.length;
     const totalPhotos = entries.reduce((sum, e) => sum + (e.attachments.photos || 0), 0);
@@ -97,9 +155,34 @@ const ProfileTab: React.FC<ProfileTabProps> = ({ entries, folders }) => {
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
-      <div>
-        <h2 className="text-2xl font-display font-bold tracking-tight">Archivist Profile</h2>
-        <p className="text-sm text-muted-foreground mt-1">Your preservation journey at a glance.</p>
+      <div className="flex flex-col items-center gap-4">
+        <button
+          onClick={() => fileInputRef.current?.click()}
+          disabled={uploading}
+          className="relative w-32 h-32 rounded-full border-4 border-border bg-muted overflow-hidden group transition-shadow hover:shadow-lg active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+        >
+          {avatarUrl ? (
+            <img src={avatarUrl} alt="Profile" className="w-full h-full object-cover" />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center text-muted-foreground">
+              <Camera size={32} />
+            </div>
+          )}
+          <div className="absolute inset-0 bg-foreground/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+            <Camera size={24} className="text-background" />
+          </div>
+        </button>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={handleAvatarUpload}
+        />
+        <div className="text-center">
+          <h2 className="text-2xl font-display font-bold tracking-tight">Archivist Profile</h2>
+          <p className="text-sm text-muted-foreground mt-1">Your preservation journey at a glance.</p>
+        </div>
       </div>
 
       {/* Archivist Level */}
