@@ -53,10 +53,12 @@ const ProfileTab: React.FC<ProfileTabProps> = ({ entries, folders }) => {
     if (!user) return;
     supabase
       .from('profiles')
-      .select('avatar_url')
+      .select('avatar_url, display_name, motto')
       .eq('id', user.id)
       .single()
       .then(({ data }) => {
+        if (data?.display_name) setDisplayName(data.display_name);
+        if (data?.motto) setMotto(data.motto);
         if (data?.avatar_url) {
           supabase.storage
             .from('user-media')
