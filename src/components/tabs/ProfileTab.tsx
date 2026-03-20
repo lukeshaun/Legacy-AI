@@ -2,7 +2,7 @@ import React, { useMemo, useRef, useState } from 'react';
 import { Entry } from '@/types/entry';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { BookOpen, Mic, Image, Calendar, Award, TrendingUp, BarChart3, Camera } from 'lucide-react';
+import { BookOpen, Mic, Image, Calendar, Award, TrendingUp, BarChart3, Camera, Pencil } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
