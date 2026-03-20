@@ -6,6 +6,7 @@ import BooksTab from '@/components/tabs/BooksTab';
 import TimelineTab from '@/components/tabs/TimelineTab';
 import BiographyTab from '@/components/tabs/BiographyTab';
 import SearchTab from '@/components/tabs/SearchTab';
+import ProfileTab from '@/components/tabs/ProfileTab';
 import SaveModal from '@/components/SaveModal';
 import { useEntries } from '@/hooks/useEntries';
 
