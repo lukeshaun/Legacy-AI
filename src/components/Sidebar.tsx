@@ -16,6 +16,7 @@ const navItems = [
   { id: 'books', icon: History, label: 'View Books' },
   { id: 'timeline', icon: MapPin, label: 'Location Timeline' },
   { id: 'biography', icon: Sparkles, label: 'Create Biography' },
+  { id: 'profile', icon: User, label: 'View Profile' },
 ];
 
 const themeOptions: { id: Theme; icon: typeof Sun; label: string }[] = [

@@ -84,6 +84,10 @@ const Index = () => {
             {activeTab === 'biography' && (
               <BiographyTab folders={folders} entries={savedEntries} />
             )}
+
+            {activeTab === 'profile' && (
+              <ProfileTab entries={savedEntries} folders={folders} />
+            )}
           </>
         )}
       </main>
