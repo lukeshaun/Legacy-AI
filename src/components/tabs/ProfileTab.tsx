@@ -2,7 +2,7 @@ import React, { useMemo, useRef, useState } from 'react';
 import { Entry } from '@/types/entry';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { BookOpen, Mic, Image, Calendar, Award, TrendingUp, BarChart3, Camera } from 'lucide-react';
+import { BookOpen, Mic, Image, Calendar, Award, TrendingUp, BarChart3, Camera, Pencil } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
@@ -41,16 +41,24 @@ const ProfileTab: React.FC<ProfileTabProps> = ({ entries, folders }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [displayName, setDisplayName] = useState('Archivist Profile');
+  const [motto, setMotto] = useState('Your preservation journey at a glance.');
+  const [editingName, setEditingName] = useState(false);
+  const [editingMotto, setEditingMotto] = useState(false);
+  const nameInputRef = useRef<HTMLInputElement>(null);
+  const mottoInputRef = useRef<HTMLInputElement>(null);
 
   // Load avatar on mount
   React.useEffect(() => {
     if (!user) return;
     supabase
       .from('profiles')
-      .select('avatar_url')
+      .select('avatar_url, display_name, motto')
       .eq('id', user.id)
       .single()
       .then(({ data }) => {
+        if (data?.display_name) setDisplayName(data.display_name);
+        if (data?.motto) setMotto(data.motto);
         if (data?.avatar_url) {
           supabase.storage
             .from('user-media')
@@ -92,6 +100,22 @@ const ProfileTab: React.FC<ProfileTabProps> = ({ entries, folders }) => {
       setUploading(false);
     }
   };
+
+  const saveField = async (field: 'display_name' | 'motto', value: string) => {
+    if (!user) return;
+    const trimmed = value.trim().slice(0, 120);
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ [field]: trimmed })
+        .eq('id', user.id);
+      if (error) throw error;
+    } catch (err) {
+      console.error(err);
+      toast.error('Failed to save');
+    }
+  };
+
   const stats = useMemo(() => {
     const totalMemories = entries.length;
     const totalPhotos = entries.reduce((sum, e) => sum + (e.attachments.photos || 0), 0);
@@ -179,9 +203,47 @@ const ProfileTab: React.FC<ProfileTabProps> = ({ entries, folders }) => {
           className="hidden"
           onChange={handleAvatarUpload}
         />
-        <div className="text-center">
-          <h2 className="text-2xl font-display font-bold tracking-tight">Archivist Profile</h2>
-          <p className="text-sm text-muted-foreground mt-1">Your preservation journey at a glance.</p>
+        <div className="text-center space-y-1">
+          {editingName ? (
+            <input
+              ref={nameInputRef}
+              className="text-2xl font-display font-bold tracking-tight bg-transparent border-b-2 border-primary text-center outline-none w-64 max-w-full"
+              value={displayName}
+              maxLength={60}
+              onChange={(e) => setDisplayName(e.target.value)}
+              onBlur={() => { setEditingName(false); saveField('display_name', displayName); }}
+              onKeyDown={(e) => { if (e.key === 'Enter') { setEditingName(false); saveField('display_name', displayName); } }}
+              autoFocus
+            />
+          ) : (
+            <button
+              onClick={() => { setEditingName(true); setTimeout(() => nameInputRef.current?.focus(), 0); }}
+              className="group inline-flex items-center gap-2 hover:opacity-80 transition-opacity"
+            >
+              <h2 className="text-2xl font-display font-bold tracking-tight">{displayName}</h2>
+              <Pencil size={14} className="text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+            </button>
+          )}
+          {editingMotto ? (
+            <input
+              ref={mottoInputRef}
+              className="text-sm text-muted-foreground bg-transparent border-b border-primary text-center outline-none w-72 max-w-full"
+              value={motto}
+              maxLength={120}
+              onChange={(e) => setMotto(e.target.value)}
+              onBlur={() => { setEditingMotto(false); saveField('motto', motto); }}
+              onKeyDown={(e) => { if (e.key === 'Enter') { setEditingMotto(false); saveField('motto', motto); } }}
+              autoFocus
+            />
+          ) : (
+            <button
+              onClick={() => { setEditingMotto(true); setTimeout(() => mottoInputRef.current?.focus(), 0); }}
+              className="group inline-flex items-center gap-1.5 hover:opacity-80 transition-opacity"
+            >
+              <p className="text-sm text-muted-foreground italic">{motto}</p>
+              <Pencil size={12} className="text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+            </button>
+          )}
         </div>
       </div>
 
