@@ -203,9 +203,47 @@ const ProfileTab: React.FC<ProfileTabProps> = ({ entries, folders }) => {
           className="hidden"
           onChange={handleAvatarUpload}
         />
-        <div className="text-center">
-          <h2 className="text-2xl font-display font-bold tracking-tight">Archivist Profile</h2>
-          <p className="text-sm text-muted-foreground mt-1">Your preservation journey at a glance.</p>
+        <div className="text-center space-y-1">
+          {editingName ? (
+            <input
+              ref={nameInputRef}
+              className="text-2xl font-display font-bold tracking-tight bg-transparent border-b-2 border-primary text-center outline-none w-64 max-w-full"
+              value={displayName}
+              maxLength={60}
+              onChange={(e) => setDisplayName(e.target.value)}
+              onBlur={() => { setEditingName(false); saveField('display_name', displayName); }}
+              onKeyDown={(e) => { if (e.key === 'Enter') { setEditingName(false); saveField('display_name', displayName); } }}
+              autoFocus
+            />
+          ) : (
+            <button
+              onClick={() => { setEditingName(true); setTimeout(() => nameInputRef.current?.focus(), 0); }}
+              className="group inline-flex items-center gap-2 hover:opacity-80 transition-opacity"
+            >
+              <h2 className="text-2xl font-display font-bold tracking-tight">{displayName}</h2>
+              <Pencil size={14} className="text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+            </button>
+          )}
+          {editingMotto ? (
+            <input
+              ref={mottoInputRef}
+              className="text-sm text-muted-foreground bg-transparent border-b border-primary text-center outline-none w-72 max-w-full"
+              value={motto}
+              maxLength={120}
+              onChange={(e) => setMotto(e.target.value)}
+              onBlur={() => { setEditingMotto(false); saveField('motto', motto); }}
+              onKeyDown={(e) => { if (e.key === 'Enter') { setEditingMotto(false); saveField('motto', motto); } }}
+              autoFocus
+            />
+          ) : (
+            <button
+              onClick={() => { setEditingMotto(true); setTimeout(() => mottoInputRef.current?.focus(), 0); }}
+              className="group inline-flex items-center gap-1.5 hover:opacity-80 transition-opacity"
+            >
+              <p className="text-sm text-muted-foreground italic">{motto}</p>
+              <Pencil size={12} className="text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+            </button>
+          )}
         </div>
       </div>
 
