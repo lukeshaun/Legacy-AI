@@ -41,6 +41,12 @@ const ProfileTab: React.FC<ProfileTabProps> = ({ entries, folders }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [displayName, setDisplayName] = useState('Archivist Profile');
+  const [motto, setMotto] = useState('Your preservation journey at a glance.');
+  const [editingName, setEditingName] = useState(false);
+  const [editingMotto, setEditingMotto] = useState(false);
+  const nameInputRef = useRef<HTMLInputElement>(null);
+  const mottoInputRef = useRef<HTMLInputElement>(null);
 
   // Load avatar on mount
   React.useEffect(() => {
