@@ -100,6 +100,22 @@ const ProfileTab: React.FC<ProfileTabProps> = ({ entries, folders }) => {
       setUploading(false);
     }
   };
+
+  const saveField = async (field: 'display_name' | 'motto', value: string) => {
+    if (!user) return;
+    const trimmed = value.trim().slice(0, 120);
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ [field]: trimmed })
+        .eq('id', user.id);
+      if (error) throw error;
+    } catch (err) {
+      console.error(err);
+      toast.error('Failed to save');
+    }
+  };
+
   const stats = useMemo(() => {
     const totalMemories = entries.length;
     const totalPhotos = entries.reduce((sum, e) => sum + (e.attachments.photos || 0), 0);
