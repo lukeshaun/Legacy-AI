@@ -37,6 +37,61 @@ function getLevel(count: number) {
 const MONTH_LABELS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
 const ProfileTab: React.FC<ProfileTabProps> = ({ entries, folders }) => {
+  const { user } = useAuth();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
+
+  // Load avatar on mount
+  React.useEffect(() => {
+    if (!user) return;
+    supabase
+      .from('profiles')
+      .select('avatar_url')
+      .eq('id', user.id)
+      .single()
+      .then(({ data }) => {
+        if (data?.avatar_url) {
+          supabase.storage
+            .from('user-media')
+            .createSignedUrl(data.avatar_url, 3600)
+            .then(({ data: urlData }) => {
+              if (urlData) setAvatarUrl(urlData.signedUrl);
+            });
+        }
+      });
+  }, [user]);
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+    setUploading(true);
+    try {
+      const ext = file.name.split('.').pop();
+      const path = `${user.id}/avatar/profile.${ext}`;
+      const { error: uploadErr } = await supabase.storage
+        .from('user-media')
+        .upload(path, file, { upsert: true });
+      if (uploadErr) throw uploadErr;
+
+      const { error: updateErr } = await supabase
+        .from('profiles')
+        .update({ avatar_url: path })
+        .eq('id', user.id);
+      if (updateErr) throw updateErr;
+
+      const { data: urlData } = await supabase.storage
+        .from('user-media')
+        .createSignedUrl(path, 3600);
+      if (urlData) setAvatarUrl(urlData.signedUrl);
+      toast.success('Profile photo updated!');
+    } catch (err) {
+      console.error(err);
+      toast.error('Failed to upload photo');
+    } finally {
+      setUploading(false);
+    }
+  };
   const stats = useMemo(() => {
     const totalMemories = entries.length;
     const totalPhotos = entries.reduce((sum, e) => sum + (e.attachments.photos || 0), 0);
