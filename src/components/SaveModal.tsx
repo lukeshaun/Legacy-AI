@@ -7,9 +7,12 @@ interface SaveModalProps {
   onSave: (folder: string, location: string, dateStart: string, dateEnd: string) => void;
   folders: string[];
   initialText?: string;
+  initialLocation?: string;
+  initialDateStart?: string;
+  initialDateEnd?: string;
 }
 
-const SaveModal: React.FC<SaveModalProps> = ({ isOpen, onClose, onSave, folders, initialText }) => {
+const SaveModal: React.FC<SaveModalProps> = ({ isOpen, onClose, onSave, folders, initialText, initialLocation, initialDateStart, initialDateEnd }) => {
   const [selectedFolder, setSelectedFolder] = useState(folders[0] || 'Personal Journal');
   const [locationInput, setLocationInput] = useState('');
   const [dateStart, setDateStart] = useState(new Date().toISOString().split('T')[0]);
@@ -20,12 +23,12 @@ const SaveModal: React.FC<SaveModalProps> = ({ isOpen, onClose, onSave, folders,
   useEffect(() => {
     if (isOpen) {
       const today = new Date().toISOString().split('T')[0];
-      setDateStart(today);
-      setDateEnd('');
-      setUseRange(false);
-      setLocationInput('');
+      setDateStart(initialDateStart || today);
+      setDateEnd(initialDateEnd || '');
+      setUseRange(!!initialDateEnd);
+      setLocationInput(initialLocation || '');
     }
-  }, [isOpen]);
+  }, [isOpen, initialDateStart, initialDateEnd, initialLocation]);
 
   if (!isOpen) return null;
 
