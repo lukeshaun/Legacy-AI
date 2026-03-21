@@ -16,13 +16,22 @@ const Index = () => {
   
   // Save modal state
   const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
-  const [pendingEntry, setPendingEntry] = useState<{ text: string; galleryCount: number; hasAudio: boolean; mediaPaths: string[] } | null>(null);
+  const [pendingEntry, setPendingEntry] = useState<{ text: string; galleryCount: number; hasAudio: boolean; mediaPaths: string[]; folder?: string; location?: string; dateStart?: string; dateEnd?: string } | null>(null);
 
   // Database-backed entries
   const { entries: savedEntries, folders, loading, addEntry } = useEntries();
 
-  const handleSaveEntry = (data: { text: string; galleryCount: number; hasAudio: boolean; mediaPaths: string[] }) => {
-    setPendingEntry(data);
+  const handleSaveEntry = (data: { text: string; galleryCount: number; hasAudio: boolean; mediaPaths: string[]; metadata: { dateStart: string; dateEnd: string; location: string; description: string } }) => {
+    // Pre-fill modal with metadata from the inline form
+    setPendingEntry({
+      text: data.metadata.description || data.text,
+      galleryCount: data.galleryCount,
+      hasAudio: data.hasAudio,
+      mediaPaths: data.mediaPaths,
+      location: data.metadata.location,
+      dateStart: data.metadata.dateStart,
+      dateEnd: data.metadata.dateEnd,
+    });
     setIsSaveModalOpen(true);
   };
 
@@ -32,9 +41,9 @@ const Index = () => {
     const success = await addEntry({
       text: pendingEntry.text,
       folder,
-      location,
-      dateStart,
-      dateEnd,
+      location: location || pendingEntry.location || '',
+      dateStart: dateStart || pendingEntry.dateStart || '',
+      dateEnd: dateEnd || pendingEntry.dateEnd || '',
       galleryCount: pendingEntry.galleryCount,
       hasAudio: pendingEntry.hasAudio,
     });
@@ -98,6 +107,9 @@ const Index = () => {
         onSave={handleConfirmSave}
         folders={folders}
         initialText={pendingEntry?.text}
+        initialLocation={pendingEntry?.location}
+        initialDateStart={pendingEntry?.dateStart}
+        initialDateEnd={pendingEntry?.dateEnd}
       />
 
       {copied && (
