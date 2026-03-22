@@ -83,6 +83,7 @@ const Index = () => {
                 folders={folders} 
                 entries={savedEntries}
                 onNavigateToUpload={() => setActiveTab('upload')}
+                onDeleteEntry={deleteEntry}
               />
             )}
 
