@@ -1,12 +1,23 @@
 import React, { useState } from 'react';
-import { Book, Plus, ArrowLeft, Calendar, MapPin, Share2, Check, Link } from 'lucide-react';
+import { Book, Plus, ArrowLeft, Calendar, MapPin, Share2, Trash2 } from 'lucide-react';
 import { Entry } from '@/types/entry';
 import { toast } from 'sonner';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 interface BooksTabProps {
   folders: string[];
   entries: Entry[];
   onNavigateToUpload: () => void;
+  onDeleteEntry?: (id: string) => Promise<boolean>;
 }
 
 const BooksTab: React.FC<BooksTabProps> = ({ folders, entries, onNavigateToUpload }) => {
