@@ -28,7 +28,7 @@ const BooksTab: React.FC<BooksTabProps> = ({ folders, entries, onNavigateToUploa
     const bookEntries = entries.filter(e => e.folder === selectedBookView);
     
     return (
-      <div className="max-w-5xl mx-auto animate-in slide-in-from-right-4 duration-300">
+      <>
         <button 
           onClick={() => setSelectedBookView(null)}
           className="mb-6 flex items-center gap-2 text-muted-foreground font-bold text-sm hover:text-primary transition-colors"
