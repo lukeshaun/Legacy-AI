@@ -20,8 +20,9 @@ interface BooksTabProps {
   onDeleteEntry?: (id: string) => Promise<boolean>;
 }
 
-const BooksTab: React.FC<BooksTabProps> = ({ folders, entries, onNavigateToUpload }) => {
+const BooksTab: React.FC<BooksTabProps> = ({ folders, entries, onNavigateToUpload, onDeleteEntry }) => {
   const [selectedBookView, setSelectedBookView] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
 
   if (selectedBookView) {
     const bookEntries = entries.filter(e => e.folder === selectedBookView);

@@ -99,5 +99,20 @@ export function useEntries() {
     }
   };
 
-  return { entries, folders, loading, addEntry, refetch: fetchEntries };
+  const deleteEntry = async (id: string) => {
+    if (!user) return false;
+    try {
+      const { error } = await supabase.from('entries').delete().eq('id', id);
+      if (error) throw error;
+      await fetchEntries();
+      toast.success('Entry deleted successfully');
+      return true;
+    } catch (err) {
+      console.error('Failed to delete entry:', err);
+      toast.error('Failed to delete entry');
+      return false;
+    }
+  };
+
+  return { entries, folders, loading, addEntry, deleteEntry, refetch: fetchEntries };
 }
