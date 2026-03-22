@@ -1,14 +1,16 @@
 import React, { useRef, useState } from 'react';
-import { Camera, FileText, Loader2, Trash2, X, Sparkles, Save, ArrowLeft } from 'lucide-react';
+import { Camera, FileText, Loader2, Trash2, X, Sparkles, Save, ArrowLeft, ChevronUp, ChevronDown } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { uploadMedia, getSignedUrl, deleteMedia } from '@/hooks/useMediaUpload';
 import EntryMetadataForm from './EntryMetadataForm';
+import { Progress } from '@/components/ui/progress';
 
 interface UploadedFile {
   localUrl: string;
   storagePath: string;
   base64: string;
+  fileName: string;
 }
 
 interface ScanUploadProps {
@@ -24,6 +26,7 @@ const ScanUpload: React.FC<ScanUploadProps> = ({ onBack, onSaveEntry }) => {
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [metadata, setMetadata] = useState({ dateStart: new Date().toISOString().split('T')[0], dateEnd: '', location: '', description: '' });
+  const [scanProgress, setScanProgress] = useState({ current: 0, total: 0 });
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const readFileAsBase64 = (file: File): Promise<string> =>
@@ -47,7 +50,7 @@ const ScanUpload: React.FC<ScanUploadProps> = ({ onBack, onSaveEntry }) => {
           uploadMedia(file, user.id, 'documents'),
         ]);
         const signedUrl = await getSignedUrl(storagePath);
-        uploaded.push({ localUrl: signedUrl, storagePath, base64 });
+        uploaded.push({ localUrl: signedUrl, storagePath, base64, fileName: file.name });
       }
       setDocuments(prev => [...prev, ...uploaded]);
     } catch (err) {
@@ -64,15 +67,27 @@ const ScanUpload: React.FC<ScanUploadProps> = ({ onBack, onSaveEntry }) => {
     setDocuments(prev => prev.filter((_, i) => i !== index));
   };
 
+  const moveDocument = (index: number, direction: -1 | 1) => {
+    const newIndex = index + direction;
+    if (newIndex < 0 || newIndex >= documents.length) return;
+    setDocuments(prev => {
+      const copy = [...prev];
+      [copy[index], copy[newIndex]] = [copy[newIndex], copy[index]];
+      return copy;
+    });
+  };
+
   const digitizeAll = async () => {
     if (!documents.length) return;
     setIsLoading(true);
     setError(null);
+    setScanProgress({ current: 0, total: documents.length });
     try {
       const results: string[] = [];
-      for (const doc of documents) {
+      for (let i = 0; i < documents.length; i++) {
+        setScanProgress({ current: i + 1, total: documents.length });
         const { data, error: fnError } = await supabase.functions.invoke('digitize-text', {
-          body: { imageBase64: doc.base64 },
+          body: { imageBase64: documents[i].base64 },
         });
         if (fnError) throw new Error(fnError.message);
         if (data?.error) throw new Error(data.error);
@@ -83,6 +98,7 @@ const ScanUpload: React.FC<ScanUploadProps> = ({ onBack, onSaveEntry }) => {
       setError(err instanceof Error ? err.message : 'Transcription failed.');
     } finally {
       setIsLoading(false);
+      setScanProgress({ current: 0, total: 0 });
     }
   };
 
@@ -95,6 +111,8 @@ const ScanUpload: React.FC<ScanUploadProps> = ({ onBack, onSaveEntry }) => {
       metadata,
     });
   };
+
+  const progressPercent = scanProgress.total > 0 ? (scanProgress.current / scanProgress.total) * 100 : 0;
 
   return (
     <div className="max-w-5xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -116,6 +134,15 @@ const ScanUpload: React.FC<ScanUploadProps> = ({ onBack, onSaveEntry }) => {
         </div>
       )}
 
+      {isLoading && scanProgress.total > 0 && (
+        <div className="mb-6 p-4 bg-primary/10 border border-primary/20 rounded-2xl space-y-2">
+          <p className="text-sm font-bold text-primary">
+            Processing page {scanProgress.current} of {scanProgress.total}...
+          </p>
+          <Progress value={progressPercent} className="h-2" />
+        </div>
+      )}
+
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         {/* Left - Documents */}
         <div className="lg:col-span-4 space-y-4">
@@ -132,12 +159,32 @@ const ScanUpload: React.FC<ScanUploadProps> = ({ onBack, onSaveEntry }) => {
           <input type="file" ref={fileInputRef} onChange={handleFileUpload} accept="image/*" multiple className="hidden" />
 
           {documents.length > 0 && (
-            <div className="grid grid-cols-3 gap-2">
+            <div className="space-y-2">
               {documents.map((doc, i) => (
-                <div key={i} className="relative aspect-square rounded-xl overflow-hidden group">
-                  <img src={doc.localUrl} className="w-full h-full object-cover" alt={`Doc ${i + 1}`} />
-                  <button onClick={() => removeDocument(i)} className="absolute inset-0 bg-destructive/80 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all">
-                    <Trash2 className="text-destructive-foreground" size={14} />
+                <div key={i} className="flex items-center gap-2 bg-card border border-border rounded-xl p-2 group">
+                  <img src={doc.localUrl} className="w-12 h-12 rounded-lg object-cover flex-shrink-0" alt={`Page ${i + 1}`} />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-bold text-foreground truncate">Page {i + 1}</p>
+                    <p className="text-[10px] text-muted-foreground truncate">{doc.fileName}</p>
+                  </div>
+                  <div className="flex flex-col gap-0.5">
+                    <button
+                      onClick={() => moveDocument(i, -1)}
+                      disabled={i === 0}
+                      className="p-1 rounded hover:bg-muted disabled:opacity-30 transition-colors"
+                    >
+                      <ChevronUp size={14} className="text-muted-foreground" />
+                    </button>
+                    <button
+                      onClick={() => moveDocument(i, 1)}
+                      disabled={i === documents.length - 1}
+                      className="p-1 rounded hover:bg-muted disabled:opacity-30 transition-colors"
+                    >
+                      <ChevronDown size={14} className="text-muted-foreground" />
+                    </button>
+                  </div>
+                  <button onClick={() => removeDocument(i)} className="p-1.5 rounded-lg hover:bg-destructive/10 transition-colors">
+                    <Trash2 size={14} className="text-destructive" />
                   </button>
                 </div>
               ))}
