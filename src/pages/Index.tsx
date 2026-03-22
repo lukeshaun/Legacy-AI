@@ -19,7 +19,7 @@ const Index = () => {
   const [pendingEntry, setPendingEntry] = useState<{ text: string; galleryCount: number; hasAudio: boolean; mediaPaths: string[]; folder?: string; location?: string; dateStart?: string; dateEnd?: string } | null>(null);
 
   // Database-backed entries
-  const { entries: savedEntries, folders, loading, addEntry } = useEntries();
+  const { entries: savedEntries, folders, loading, addEntry, deleteEntry } = useEntries();
 
   const handleSaveEntry = (data: { text: string; galleryCount: number; hasAudio: boolean; mediaPaths: string[]; metadata: { dateStart: string; dateEnd: string; location: string; description: string } }) => {
     // Combine description as title header with the full transcription text
@@ -83,6 +83,7 @@ const Index = () => {
                 folders={folders} 
                 entries={savedEntries}
                 onNavigateToUpload={() => setActiveTab('upload')}
+                onDeleteEntry={deleteEntry}
               />
             )}
 
