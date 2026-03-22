@@ -22,9 +22,13 @@ const Index = () => {
   const { entries: savedEntries, folders, loading, addEntry } = useEntries();
 
   const handleSaveEntry = (data: { text: string; galleryCount: number; hasAudio: boolean; mediaPaths: string[]; metadata: { dateStart: string; dateEnd: string; location: string; description: string } }) => {
-    // Pre-fill modal with metadata from the inline form
+    // Combine description as title header with the full transcription text
+    const title = data.metadata.description?.trim();
+    const body = data.text?.trim();
+    const combinedText = title && body ? `${title}\n\n${body}` : title || body || '';
+
     setPendingEntry({
-      text: data.metadata.description || data.text,
+      text: combinedText,
       galleryCount: data.galleryCount,
       hasAudio: data.hasAudio,
       mediaPaths: data.mediaPaths,

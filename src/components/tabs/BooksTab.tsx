@@ -66,7 +66,20 @@ const BooksTab: React.FC<BooksTabProps> = ({ folders, entries, onNavigateToUploa
                     </button>
                   </div>
                 </div>
-                <p className="text-foreground/80 leading-relaxed font-display text-lg">{entry.text}</p>
+                {(() => {
+                  const lines = entry.text.split('\n');
+                  const firstLine = lines[0]?.trim();
+                  const rest = lines.slice(1).join('\n').trim();
+                  const hasTitle = rest.length > 0;
+                  return hasTitle ? (
+                    <>
+                      <h3 className="text-xl font-display font-bold text-foreground mb-3">{firstLine}</h3>
+                      <p className="text-foreground/80 leading-relaxed whitespace-pre-wrap">{rest}</p>
+                    </>
+                  ) : (
+                    <p className="text-foreground/80 leading-relaxed font-display text-lg whitespace-pre-wrap">{entry.text}</p>
+                  );
+                })()}
               </div>
             ))
           ) : (
