@@ -76,6 +76,13 @@ const BooksTab: React.FC<BooksTabProps> = ({ folders, entries, onNavigateToUploa
                     >
                       <Share2 size={16} />
                     </button>
+                    <button
+                      onClick={() => setDeleteTarget(entry.id)}
+                      className="p-2 rounded-xl hover:bg-destructive/10 transition-colors text-muted-foreground hover:text-destructive"
+                      title="Delete entry"
+                    >
+                      <Trash2 size={16} />
+                    </button>
                   </div>
                 </div>
                 {(() => {
