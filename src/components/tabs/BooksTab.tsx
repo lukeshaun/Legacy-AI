@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { ChevronDown, ChevronUp } from 'lucide-react';
 import { Book, Plus, ArrowLeft, Calendar, MapPin, Share2, Trash2 } from 'lucide-react';
 import { Entry } from '@/types/entry';
 import { toast } from 'sonner';
