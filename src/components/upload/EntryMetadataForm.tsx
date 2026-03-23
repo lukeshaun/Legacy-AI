@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Calendar, CalendarRange, MapPin, FileText } from 'lucide-react';
+import { Calendar, CalendarRange, MapPin, FileText, Type } from 'lucide-react';
 
 interface EntryMetadataFormProps {
   onMetadataChange: (metadata: { title: string; dateStart: string; dateEnd: string; location: string; description: string }) => void;
