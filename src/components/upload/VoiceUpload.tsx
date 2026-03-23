@@ -11,7 +11,7 @@ interface UploadedFile {
 
 interface VoiceUploadProps {
   onBack: () => void;
-  onSaveEntry: (data: { text: string; galleryCount: number; hasAudio: boolean; mediaPaths: string[]; metadata: { dateStart: string; dateEnd: string; location: string; description: string } }) => void;
+  onSaveEntry: (data: { text: string; galleryCount: number; hasAudio: boolean; mediaPaths: string[]; metadata: { title: string; dateStart: string; dateEnd: string; location: string; description: string } }) => void;
 }
 
 const VoiceUpload: React.FC<VoiceUploadProps> = ({ onBack, onSaveEntry }) => {
