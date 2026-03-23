@@ -21,11 +21,14 @@ const Index = () => {
   // Database-backed entries
   const { entries: savedEntries, folders, loading, addEntry, deleteEntry } = useEntries();
 
-  const handleSaveEntry = (data: { text: string; galleryCount: number; hasAudio: boolean; mediaPaths: string[]; metadata: { dateStart: string; dateEnd: string; location: string; description: string } }) => {
-    // Combine description as title header with the full transcription text
-    const title = data.metadata.description?.trim();
+  const handleSaveEntry = (data: { text: string; galleryCount: number; hasAudio: boolean; mediaPaths: string[]; metadata: { title: string; dateStart: string; dateEnd: string; location: string; description: string } }) => {
+    const title = data.metadata.title?.trim();
+    const description = data.metadata.description?.trim();
     const body = data.text?.trim();
-    const combinedText = title && body ? `${title}\n\n${body}` : title || body || '';
+    
+    // Build combined text: Title\n\nDescription\n\nBody
+    const parts = [title, description, body].filter(Boolean);
+    const combinedText = parts.join('\n\n');
 
     setPendingEntry({
       text: combinedText,
