@@ -13,8 +13,9 @@ const EntryMetadataForm: React.FC<EntryMetadataFormProps> = ({ onMetadataChange 
   const [location, setLocation] = useState('');
   const [description, setDescription] = useState('');
 
-  const notify = (updates: Partial<{ dateStart: string; dateEnd: string; location: string; description: string }>) => {
+  const notify = (updates: Partial<{ title: string; dateStart: string; dateEnd: string; location: string; description: string }>) => {
     const next = {
+      title: updates.title ?? title,
       dateStart: updates.dateStart ?? dateStart,
       dateEnd: updates.dateEnd ?? (useRange ? dateEnd : ''),
       location: updates.location ?? location,
