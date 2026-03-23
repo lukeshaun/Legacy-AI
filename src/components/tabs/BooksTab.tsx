@@ -176,7 +176,6 @@ const BooksTab: React.FC<BooksTabProps> = ({ folders, entries, onNavigateToUploa
                       <p className="text-foreground/80 leading-relaxed font-display text-lg whitespace-pre-wrap">{entry.text}</p>
                     );
                   })()}
-                  })()}
                 </div>
               ))
             ) : (
