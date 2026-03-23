@@ -11,7 +11,7 @@ interface UploadedFile {
 
 interface PhotoUploadProps {
   onBack: () => void;
-  onSaveEntry: (data: { text: string; galleryCount: number; hasAudio: boolean; mediaPaths: string[]; metadata: { dateStart: string; dateEnd: string; location: string; description: string } }) => void;
+  onSaveEntry: (data: { text: string; galleryCount: number; hasAudio: boolean; mediaPaths: string[]; metadata: { title: string; dateStart: string; dateEnd: string; location: string; description: string } }) => void;
 }
 
 const PhotoUpload: React.FC<PhotoUploadProps> = ({ onBack, onSaveEntry }) => {
@@ -19,7 +19,7 @@ const PhotoUpload: React.FC<PhotoUploadProps> = ({ onBack, onSaveEntry }) => {
   const [photos, setPhotos] = useState<UploadedFile[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [metadata, setMetadata] = useState({ dateStart: new Date().toISOString().split('T')[0], dateEnd: '', location: '', description: '' });
+  const [metadata, setMetadata] = useState({ title: '', dateStart: new Date().toISOString().split('T')[0], dateEnd: '', location: '', description: '' });
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {

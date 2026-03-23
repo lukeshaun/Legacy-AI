@@ -1,19 +1,21 @@
 import React, { useState } from 'react';
-import { Calendar, CalendarRange, MapPin, FileText } from 'lucide-react';
+import { Calendar, CalendarRange, MapPin, FileText, Type } from 'lucide-react';
 
 interface EntryMetadataFormProps {
-  onMetadataChange: (metadata: { dateStart: string; dateEnd: string; location: string; description: string }) => void;
+  onMetadataChange: (metadata: { title: string; dateStart: string; dateEnd: string; location: string; description: string }) => void;
 }
 
 const EntryMetadataForm: React.FC<EntryMetadataFormProps> = ({ onMetadataChange }) => {
+  const [title, setTitle] = useState('');
   const [dateStart, setDateStart] = useState(new Date().toISOString().split('T')[0]);
   const [dateEnd, setDateEnd] = useState('');
   const [useRange, setUseRange] = useState(false);
   const [location, setLocation] = useState('');
   const [description, setDescription] = useState('');
 
-  const notify = (updates: Partial<{ dateStart: string; dateEnd: string; location: string; description: string }>) => {
+  const notify = (updates: Partial<{ title: string; dateStart: string; dateEnd: string; location: string; description: string }>) => {
     const next = {
+      title: updates.title ?? title,
       dateStart: updates.dateStart ?? dateStart,
       dateEnd: updates.dateEnd ?? (useRange ? dateEnd : ''),
       location: updates.location ?? location,
@@ -25,6 +27,20 @@ const EntryMetadataForm: React.FC<EntryMetadataFormProps> = ({ onMetadataChange 
   return (
     <div className="bg-card rounded-[2rem] border border-border p-6 shadow-soft space-y-5">
       <h3 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Entry Details (optional)</h3>
+
+      {/* Title */}
+      <div>
+        <label className="text-xs font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-2 mb-2">
+          <Type size={14} className="text-primary" /> Title
+        </label>
+        <input
+          type="text"
+          value={title}
+          onChange={(e) => { setTitle(e.target.value); notify({ title: e.target.value }); }}
+          placeholder="Give this memory a title..."
+          className="w-full px-4 py-3 bg-muted border-none rounded-2xl text-sm font-semibold"
+        />
+      </div>
 
       {/* Date */}
       <div>

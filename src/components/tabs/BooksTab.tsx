@@ -114,18 +114,32 @@ const BooksTab: React.FC<BooksTabProps> = ({ folders, entries, onNavigateToUploa
                     </div>
                   </div>
                   {(() => {
-                    const lines = entry.text.split('\n');
-                    const firstLine = lines[0]?.trim();
-                    const rest = lines.slice(1).join('\n').trim();
-                    const hasTitle = rest.length > 0;
-                    return hasTitle ? (
-                      <>
-                        <h3 className="text-xl font-display font-bold text-foreground mb-3">{firstLine}</h3>
-                        <p className="text-foreground/80 leading-relaxed whitespace-pre-wrap">{rest}</p>
-                      </>
-                    ) : (
-                      <p className="text-foreground/80 leading-relaxed font-display text-lg whitespace-pre-wrap">{entry.text}</p>
-                    );
+                    const blocks = entry.text.split('\n\n');
+                    // If 3+ blocks: title, description, body
+                    // If 2 blocks: title, body (no description)
+                    // If 1 block: just body text
+                    if (blocks.length >= 3) {
+                      const title = blocks[0]?.trim();
+                      const description = blocks[1]?.trim();
+                      const body = blocks.slice(2).join('\n\n').trim();
+                      return (
+                        <>
+                          <h3 className="text-xl font-display font-bold text-foreground mb-1">{title}</h3>
+                          <p className="text-sm text-muted-foreground mb-3">{description}</p>
+                          <p className="text-foreground/80 leading-relaxed whitespace-pre-wrap">{body}</p>
+                        </>
+                      );
+                    } else if (blocks.length === 2) {
+                      const title = blocks[0]?.trim();
+                      const body = blocks[1]?.trim();
+                      return (
+                        <>
+                          <h3 className="text-xl font-display font-bold text-foreground mb-3">{title}</h3>
+                          <p className="text-foreground/80 leading-relaxed whitespace-pre-wrap">{body}</p>
+                        </>
+                      );
+                    }
+                    return <p className="text-foreground/80 leading-relaxed font-display text-lg whitespace-pre-wrap">{entry.text}</p>;
                   })()}
                 </div>
               ))

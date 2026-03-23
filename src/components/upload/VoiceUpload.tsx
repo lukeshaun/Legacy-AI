@@ -11,7 +11,7 @@ interface UploadedFile {
 
 interface VoiceUploadProps {
   onBack: () => void;
-  onSaveEntry: (data: { text: string; galleryCount: number; hasAudio: boolean; mediaPaths: string[]; metadata: { dateStart: string; dateEnd: string; location: string; description: string } }) => void;
+  onSaveEntry: (data: { text: string; galleryCount: number; hasAudio: boolean; mediaPaths: string[]; metadata: { title: string; dateStart: string; dateEnd: string; location: string; description: string } }) => void;
 }
 
 const VoiceUpload: React.FC<VoiceUploadProps> = ({ onBack, onSaveEntry }) => {
@@ -20,7 +20,7 @@ const VoiceUpload: React.FC<VoiceUploadProps> = ({ onBack, onSaveEntry }) => {
   const [isRecording, setIsRecording] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [metadata, setMetadata] = useState({ dateStart: new Date().toISOString().split('T')[0], dateEnd: '', location: '', description: '' });
+  const [metadata, setMetadata] = useState({ title: '', dateStart: new Date().toISOString().split('T')[0], dateEnd: '', location: '', description: '' });
 
   const audioInputRef = useRef<HTMLInputElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);

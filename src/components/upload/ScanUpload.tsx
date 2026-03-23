@@ -15,7 +15,7 @@ interface UploadedFile {
 
 interface ScanUploadProps {
   onBack: () => void;
-  onSaveEntry: (data: { text: string; galleryCount: number; hasAudio: boolean; mediaPaths: string[]; metadata: { dateStart: string; dateEnd: string; location: string; description: string } }) => void;
+  onSaveEntry: (data: { text: string; galleryCount: number; hasAudio: boolean; mediaPaths: string[]; metadata: { title: string; dateStart: string; dateEnd: string; location: string; description: string } }) => void;
 }
 
 const ScanUpload: React.FC<ScanUploadProps> = ({ onBack, onSaveEntry }) => {
@@ -25,7 +25,7 @@ const ScanUpload: React.FC<ScanUploadProps> = ({ onBack, onSaveEntry }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [metadata, setMetadata] = useState({ dateStart: new Date().toISOString().split('T')[0], dateEnd: '', location: '', description: '' });
+  const [metadata, setMetadata] = useState({ title: '', dateStart: new Date().toISOString().split('T')[0], dateEnd: '', location: '', description: '' });
   const [scanProgress, setScanProgress] = useState({ current: 0, total: 0 });
   const fileInputRef = useRef<HTMLInputElement>(null);
 
