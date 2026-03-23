@@ -28,6 +28,20 @@ const EntryMetadataForm: React.FC<EntryMetadataFormProps> = ({ onMetadataChange 
     <div className="bg-card rounded-[2rem] border border-border p-6 shadow-soft space-y-5">
       <h3 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Entry Details (optional)</h3>
 
+      {/* Title */}
+      <div>
+        <label className="text-xs font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-2 mb-2">
+          <FileText size={14} className="text-primary" /> Title
+        </label>
+        <input
+          type="text"
+          value={title}
+          onChange={(e) => { setTitle(e.target.value); notify({ title: e.target.value }); }}
+          placeholder="Give this memory a title..."
+          className="w-full px-4 py-3 bg-muted border-none rounded-2xl text-sm font-semibold"
+        />
+      </div>
+
       {/* Date */}
       <div>
         <div className="flex items-center justify-between mb-2">
