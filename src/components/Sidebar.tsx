@@ -42,7 +42,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, onClearBookV
   return (
     <nav className="w-full md:w-64 bg-card border-r border-border p-6 flex flex-col gap-8">
       <div className="flex items-center gap-3 px-2">
-        <img alt="Legacy AI" className="w-14 h-14 object-contain" src="/lovable-uploads/3d11ec34-ba16-4d28-b3b7-90f6e27178c7.jpg" />
+        <img alt="Legacy AI" className="w-14 h-14 object-contain bg-secondary-foreground" src="/lovable-uploads/2f34731b-6047-4403-a807-edf5d23cadad.jpg" />
         <h1 className="text-xl font-display font-bold tracking-tight">Legacy AI</h1>
       </div>
       <div className="flex flex-col gap-2">
