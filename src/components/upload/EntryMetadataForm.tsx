@@ -31,7 +31,7 @@ const EntryMetadataForm: React.FC<EntryMetadataFormProps> = ({ onMetadataChange 
       {/* Title */}
       <div>
         <label className="text-xs font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-2 mb-2">
-          <FileText size={14} className="text-primary" /> Title
+          <Type size={14} className="text-primary" /> Title
         </label>
         <input
           type="text"
