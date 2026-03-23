@@ -2,10 +2,11 @@ import React, { useState } from 'react';
 import { Calendar, CalendarRange, MapPin, FileText } from 'lucide-react';
 
 interface EntryMetadataFormProps {
-  onMetadataChange: (metadata: { dateStart: string; dateEnd: string; location: string; description: string }) => void;
+  onMetadataChange: (metadata: { title: string; dateStart: string; dateEnd: string; location: string; description: string }) => void;
 }
 
 const EntryMetadataForm: React.FC<EntryMetadataFormProps> = ({ onMetadataChange }) => {
+  const [title, setTitle] = useState('');
   const [dateStart, setDateStart] = useState(new Date().toISOString().split('T')[0]);
   const [dateEnd, setDateEnd] = useState('');
   const [useRange, setUseRange] = useState(false);
