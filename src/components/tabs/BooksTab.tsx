@@ -24,6 +24,16 @@ interface BooksTabProps {
 const BooksTab: React.FC<BooksTabProps> = ({ folders, entries, onNavigateToUpload, onDeleteEntry }) => {
   const [selectedBookView, setSelectedBookView] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+  const [expandedEntries, setExpandedEntries] = useState<Set<string>>(new Set());
+
+  const toggleExpand = (id: string) => {
+    setExpandedEntries(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
 
   const deleteDialog = (
     <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
