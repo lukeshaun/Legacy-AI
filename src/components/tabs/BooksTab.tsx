@@ -126,9 +126,7 @@ const BooksTab: React.FC<BooksTabProps> = ({ folders, entries, onNavigateToUploa
                   </div>
                   {(() => {
                     const blocks = entry.text.split('\n\n');
-                    // If 3+ blocks: title, description, body
-                    // If 2 blocks: title, body (no description)
-                    // If 1 block: just body text
+                    const isExpanded = expandedEntries.has(entry.id);
                     if (blocks.length >= 3) {
                       const title = blocks[0]?.trim();
                       const description = blocks[1]?.trim();
@@ -136,8 +134,20 @@ const BooksTab: React.FC<BooksTabProps> = ({ folders, entries, onNavigateToUploa
                       return (
                         <>
                           <h3 className="text-xl font-display font-bold text-foreground mb-1">{title}</h3>
-                          <p className="text-sm text-muted-foreground mb-3">{description}</p>
-                          <p className="text-foreground/80 leading-relaxed whitespace-pre-wrap">{body}</p>
+                          <p className="text-sm text-muted-foreground mb-2">{description}</p>
+                          {body && (
+                            <>
+                              {isExpanded && (
+                                <p className="text-foreground/80 leading-relaxed whitespace-pre-wrap mt-2">{body}</p>
+                              )}
+                              <button
+                                onClick={() => toggleExpand(entry.id)}
+                                className="flex items-center gap-1 text-xs font-bold text-primary mt-2 hover:text-primary/80 transition-colors"
+                              >
+                                {isExpanded ? <><ChevronUp size={14} /> Collapse</> : <><ChevronDown size={14} /> Read more</>}
+                              </button>
+                            </>
+                          )}
                         </>
                       );
                     } else if (blocks.length === 2) {
@@ -145,12 +155,27 @@ const BooksTab: React.FC<BooksTabProps> = ({ folders, entries, onNavigateToUploa
                       const body = blocks[1]?.trim();
                       return (
                         <>
-                          <h3 className="text-xl font-display font-bold text-foreground mb-3">{title}</h3>
-                          <p className="text-foreground/80 leading-relaxed whitespace-pre-wrap">{body}</p>
+                          <h3 className="text-xl font-display font-bold text-foreground mb-2">{title}</h3>
+                          {body && (
+                            <>
+                              {isExpanded && (
+                                <p className="text-foreground/80 leading-relaxed whitespace-pre-wrap mt-2">{body}</p>
+                              )}
+                              <button
+                                onClick={() => toggleExpand(entry.id)}
+                                className="flex items-center gap-1 text-xs font-bold text-primary mt-2 hover:text-primary/80 transition-colors"
+                              >
+                                {isExpanded ? <><ChevronUp size={14} /> Collapse</> : <><ChevronDown size={14} /> Read more</>}
+                              </button>
+                            </>
+                          )}
                         </>
                       );
                     }
-                    return <p className="text-foreground/80 leading-relaxed font-display text-lg whitespace-pre-wrap">{entry.text}</p>;
+                    return (
+                      <p className="text-foreground/80 leading-relaxed font-display text-lg whitespace-pre-wrap">{entry.text}</p>
+                    );
+                  })()}
                   })()}
                 </div>
               ))
